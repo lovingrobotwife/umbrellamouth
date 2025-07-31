@@ -1,0 +1,69 @@
+#! /home/orange/pyenv/bin/python -B
+
+import sys
+import argparse
+from types import GeneratorType
+from datetime import datetime
+
+from umbrellamouth import *
+
+def find_paths(xs):
+    if xs is None: return None
+    if not isinstance(xs, list) and not isinstance(xs, GeneratorType): 
+        xs = [xs]
+
+    for x in xs:
+        path = Path(x).absolute()
+        
+        if not path.exists():
+            continue
+
+        if not is_in_coll(path):
+            if not path == COLL:
+                continue
+
+        if is_hidden(path):
+            continue
+
+        if path.is_dir():
+            yield from find_paths(recursive_scandir(path))
+            continue
+
+        yield path
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('input', nargs='*', default=parse_stdin()) 
+    args = parser.parse_args()
+
+    if not args.input:
+        args.input = [COLL]
+
+    with db_cursor() as (cursor, conn):
+        for path in find_paths(args.input):
+            attrs = default_attrs()
+            attrs['due'] = int(datetime.now().timestamp())
+            stored_attrs = {}
+
+            if not is_uuid(path.stem): # therefore can't be in the database
+                attrs['title'] = path.stem.lower().strip()
+                entry = entry_()
+                stem = path.with_stem(entry)
+                path = path.rename(stem)
+                print(entry)
+            else: # add missing attributes
+                entry = path.stem
+                stored_attrs = attrs_(entry, cursor=cursor)
+                attrs.update(stored_attrs)
+
+            ## more attrs
+            attrs['path'] = relative_to_coll(path) # path
+            init_priority(entry, attrs, cursor=cursor) # priority
+            # TODO ^ attrs dict may no longer reflect priority (if there was no priority)
+            # I'm not sure if this is okay or not, so double check later
+            
+            if attrs == stored_attrs: # nothing changed
+                continue
+
+            save_attrs(entry, attrs, cursor=cursor)
+            conn.commit()

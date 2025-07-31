@@ -1,0 +1,13 @@
+#! /home/orange/pyenv/bin/python -B
+
+import sys
+from umbrellamouth import *
+
+if __name__ == '__main__':
+    entry, attrs = resolve_window()
+    if not entry: sys.exit() 
+
+    path = find_entry_path(entry, attrs)
+    if not path: sys.exit()
+
+    print(path)

@@ -1,0 +1,62 @@
+#! /home/orange/pyenv/bin/python -B
+
+import sys
+import argparse
+import subprocess
+from pathlib import Path
+
+from umbrellamouth import *
+
+TERM = 'ghostty'
+
+PROGRAMS = {
+    'emacs': {
+        'suffixes': ['', '.md', '.org'],
+        'tty': False 
+    },
+    'feh': {
+        'suffixes': ['.png', '.jpeg', '.jpg', '.webp'], 
+        'tty': False
+    },
+    'htmlview': {
+        'suffixes': ['.html'],
+        'tty': False
+    },
+    'mpv': {
+        'suffixes': ['.mp4', '.mkv', '.mov', '.mp3', '.wav', '.m3u8'],
+        'tty': False
+    },
+    'sioyek': {
+        'suffixes': ['.pdf', '.epub'],
+        'tty': False
+    },
+    'python': {
+        'suffixes': ['.py'],
+        'tty': True
+    },
+    'bash': {
+        'suffixes': ['.sh'],
+        'tty': True
+    },
+}
+
+@with_cursor
+def main(cursor=None):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('input', nargs='*', default=parse_stdin()) 
+    parser.add_argument('--new-tty', action='store_true') 
+    args = parser.parse_args()
+
+    for entry, attrs in parse(args.input, cursor=cursor):
+        path = find_entry_path(entry, attrs)
+
+        for program in PROGRAMS:
+            if path.suffix in PROGRAMS[program]['suffixes']:
+                if args.new_tty and PROGRAMS[program]['tty']: 
+                    subprocess.run([TERM, '-e', program, str(path)])
+                else:
+                    subprocess.run([program, str(path)])
+                break
+
+if __name__ == '__main__':
+    main()

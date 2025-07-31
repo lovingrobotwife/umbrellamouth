@@ -1,0 +1,3 @@
+#! /bin/bash
+
+ls -ct /home/orange/000 | head -1

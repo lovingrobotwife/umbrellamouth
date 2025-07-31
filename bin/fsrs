@@ -1,0 +1,90 @@
+#! /home/orange/pyenv/bin/python -B
+
+import sys
+import random
+import argparse
+import subprocess
+from fsrs import Scheduler, Card, Rating 
+from datetime import datetime, timedelta, timezone
+
+from umbrellamouth import *
+
+DESIRED_RETENTION = 0.8
+PARAMETERS = (0.2172, 1.1771, 3.2602, 16.1507, 7.0114, 0.57, 2.0966, 0.0069, 1.5261, 0.112, 1.0178, 1.849, 0.1133, 0.3127, 2.2934, 0.2191, 3.0004, 0.7536, 0.3332, 0.1437, 0.2)
+MAXIMUM_INTERVAL = 36500
+
+PASS_RATINGS = ('1', 'pass', 'good') 
+FAIL_RATINGS = ('0', 'fail', 'again') 
+RATINGS = PASS_RATINGS + FAIL_RATINGS
+
+def due_(review_log):
+    scheduler = Scheduler(
+        parameters=PARAMETERS,
+        desired_retention=DESIRED_RETENTION,
+        learning_steps=(),
+        relearning_steps=(),
+        maximum_interval=MAXIMUM_INTERVAL,
+        enable_fuzzing=False
+    )
+    
+    card = Card()
+
+    for timestamp, rating in review_log:
+        rating = Rating.Good if rating else Rating.Again
+        review_datetime = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+        card, _ = scheduler.review_card(card, rating, review_datetime=review_datetime)
+
+    interval = interval_(card.due.astimezone().replace(tzinfo=None))
+    interval = gauss_fuzz(interval, ratio=0.2)
+
+    return datetime.now() + timedelta(days=interval)
+
+@with_cursor
+def main(cursor=None):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('rating', nargs='?', choices=RATINGS)
+    parser.add_argument('--ask', action='store_true')
+    args = parser.parse_args()
+    
+    stdin = parse_stdin()
+
+    # prompt for input if not provided
+    if args.rating is None:
+        if not args.ask:
+            print('provide rating or --ask', file=sys.stderr)
+            sys.exit(3) # 3 is for call_scheduler function
+
+        output = subprocess.run(
+            ['rofi', '-dmenu', '-no-custom', '-p', 'rating'],
+            input='1 again\n3 good', 
+            text=True, 
+            capture_output=True,
+        ).stdout.strip()
+
+        if not output: # pressed esc usually
+            sys.exit()
+
+        args.rating = output.split()[1].strip()
+
+    # validate input
+    if args.rating in PASS_RATINGS: args.rating = 1
+    elif args.rating in FAIL_RATINGS: args.rating = 0    
+    else: raise Exception('invalid rating')
+
+    # review
+    for entry, attrs in parse(stdin, cursor=cursor):
+        review_log = attrs.get('review_log', [])
+        review_log = remove_same_day_repetition(review_log)
+        review_log.append([int(datetime.now().timestamp()), args.rating]) 
+        
+        due = due_(review_log)
+        interval = interval_(due)
+
+        attrs['due'] = int(due.timestamp())
+        attrs['interval'] = interval 
+        attrs['review_log'] = review_log
+
+        save_attrs(entry, attrs, cursor=cursor)
+
+if __name__ == '__main__':
+    main()

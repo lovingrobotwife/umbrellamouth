@@ -1,0 +1,59 @@
+#! /home/orange/pyenv/bin/python -B
+
+from umbrellamouth import *
+
+def clean_directory():
+    for path in recursive_scandir(COLL):
+        if path.stat().st_size == 0:
+            path.unlink()
+
+@with_cursor
+def clean_db(cursor=None):
+    flag = False
+
+    cursor.execute('''
+        SELECT DISTINCT entry 
+        FROM umbrellamouth 
+    ''')
+    for entry in cursor.fetchall():
+        entry = entry[0]
+        attrs = attrs_(entry, cursor=cursor)
+        path = find_entry_path(entry, attrs)
+
+        if path: 
+            continue
+
+        cursor.execute('''
+            DELETE FROM umbrellamouth 
+            WHERE entry = ?
+        ''', (entry,))
+
+        print(entry)
+
+@with_cursor
+def repair_priority_queue(cursor=None): # TODO: I'm not sure this is the best solution.
+    buffer = []
+
+    cursor.execute('''
+        SELECT DISTINCT entry 
+        FROM umbrellamouth 
+    ''')
+    for entry in cursor.fetchall():
+        entry = entry[0]
+        attrs = attrs_(entry, cursor=cursor)
+        priority = attrs.get('priority', None)
+
+        if priority is None:
+            continue
+
+        buffer.append([priority, entry])
+
+    buffer.sort() 
+
+    for i, (_, entry) in enumerate(buffer):
+        save_attr(entry, 'priority', i, cursor=cursor)
+
+if __name__ == '__main__':
+    clean_directory()
+    clean_db()
+    repair_priority_queue()

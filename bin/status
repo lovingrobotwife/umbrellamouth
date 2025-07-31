@@ -1,0 +1,35 @@
+#! /home/orange/pyenv/bin/python -B
+
+import sys
+import time
+import math
+from datetime import datetime
+
+from umbrellamouth import *
+
+while True:
+    time.sleep(0.5)
+    
+    entry, attrs = resolve_window()
+    if entry is None: 
+        print('None', flush=True)
+        continue
+
+    pos = attrs.get('priority')
+    if pos is None: 
+        print('None', flush=True)
+        continue
+
+    perc = pos_to_perc('priority', pos) 
+    perc = perc*100
+    perc = round(perc, 3)
+
+    due = attrs.get('due', datetime.now().timestamp())
+    due_dt = datetime.fromtimestamp(due)
+    interval_days = interval_(due_dt)
+
+    scheduler = attrs.get('scheduler', DEFAULT_SCHEDULER)
+
+    title = attrs.get('title', 'None')[:50]
+        
+    print(f'{perc}%    {interval_days}    {scheduler}    {title}', flush=True)

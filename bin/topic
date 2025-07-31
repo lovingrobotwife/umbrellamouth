@@ -1,0 +1,40 @@
+#! /home/orange/pyenv/bin/python -B
+
+import math
+import random
+import argparse
+from datetime import datetime, timedelta
+
+from umbrellamouth import *
+
+@with_cursor
+def main(cursor=None):
+    stdin = parse_stdin()
+    
+    for entry, attrs in parse(stdin, cursor=cursor):
+        # get priority
+        pos = attrs.get('priority')
+        perc = pos_to_perc('priority', pos) if pos is not None else random.random() 
+        
+        # use priority to determine afactor
+        min_, max_ = 1.1, 3
+        afactor = min_ + ((max_ - min_) * perc)
+
+        # fuzz
+        fuzz = random.uniform(0.9, 1.1)
+
+        # get last interval 
+        last_interval = attrs.get('interval', 0)
+        last_interval = max(1, last_interval)
+
+        # multiply last interval by factor
+        interval = math.ceil(last_interval * afactor * fuzz)
+        interval = max(last_interval + 1, interval)
+
+        attrs['due'] = int((datetime.now() + timedelta(days=interval)).timestamp())
+        attrs['interval'] = interval
+
+        save_attrs(entry, attrs, cursor=cursor)
+
+if __name__ == '__main__':
+    main()

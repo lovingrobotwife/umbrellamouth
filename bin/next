@@ -1,0 +1,35 @@
+#! /home/orange/pyenv/bin/python -B
+
+import random
+import subprocess
+
+from umbrellamouth import *
+
+def next_(entry, attrs):
+    # ret/cap (see also: .bashrc) 
+    with open('/tmp/capture.out', 'w') as f:
+        f.write(f'{str(entry)}\n')
+
+    returncode = call_scheduler(entry, attrs)
+    
+    # open entry
+    subprocess.run(['open'], input=str(entry), text=True)
+    
+    if returncode == 3: # sys.exit(3)
+        call_scheduler(entry, attrs, ask=True)
+
+    print(json.dumps(attrs, indent=4))
+
+@with_cursor
+def main(cursor=None):
+    subset = outstanding_priority_sort(cursor=cursor)
+
+    if random.random() >= 0.75:
+        random.shuffle(subset)
+
+    for entry, attrs in parse(subset, cursor=cursor):
+        next_(entry, attrs) 
+        break 
+
+if __name__ == '__main__':
+    main()

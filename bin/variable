@@ -1,0 +1,27 @@
+#! /home/orange/pyenv/bin/python -B
+
+import random
+import argparse
+from datetime import datetime, timedelta
+
+from umbrellamouth import *
+
+@with_cursor
+def main(cursor=None):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('start', type=int) 
+    parser.add_argument('end', type=int) 
+    args = parser.parse_args()
+    
+    stdin = parse_stdin()
+    
+    for entry, attrs in parse(stdin, cursor=cursor):
+        interval = random.randint(args.start, args.end)
+
+        attrs['inteval'] = interval
+        attrs['due'] = int((datetime.now() + timedelta(days=interval)).timestamp())
+
+        save_attrs(entry, attrs, cursor=cursor)
+
+if __name__ == '__main__':
+    main()

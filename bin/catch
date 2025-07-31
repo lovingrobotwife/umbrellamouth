@@ -1,0 +1,31 @@
+#! /home/orange/pyenv/bin/python -B
+
+import argparse
+
+from umbrellamouth import *
+
+@with_cursor
+def main(cursor=None):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('suffix', nargs='?', default='')
+    args = parser.parse_args()
+    
+    if args.suffix and not args.suffix.startswith('.'):
+        args.suffix = '.' + args.suffix
+
+    entry = entry_()
+    path = COLL / (entry + args.suffix)
+    path.touch()
+    
+    attrs = default_attrs()
+    attrs['path'] = relative_to_coll(path)
+    save_attrs(entry, attrs, cursor=cursor)
+    
+    init_priority(entry, attrs, cursor=cursor)
+
+    print(path)
+    
+if __name__ == '__main__':
+    main()
+
+    

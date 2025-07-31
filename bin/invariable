@@ -1,0 +1,35 @@
+#! /home/orange/pyenv/bin/python -B
+
+import argparse
+from datetime import datetime, timedelta
+
+from umbrellamouth import *
+
+@with_cursor
+def main(cursor=None):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('interval', nargs='?', type=int) 
+    args = parser.parse_args()
+    
+    stdin = parse_stdin()
+
+    # parse interval
+    if args.interval is None:
+        output = subprocess.run(
+            ['rofi', '-dmenu', '-p', 'interval (days)'],
+            text=True, 
+            capture_output=True,
+        ).stdout.strip()
+
+        if not output: # pressed esc usually
+            sys.exit()
+
+        args.interval = int(output) 
+    
+    for entry, attrs in parse(stdin, cursor=cursor):
+        attrs['interval'] = args.interval
+        attrs['due'] = int((datetime.now() + timedelta(days=args.interval)).timestamp())
+        save_attrs(entry, attrs, cursor=cursor)
+
+if __name__ == '__main__':
+    main()

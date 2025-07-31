@@ -1,0 +1,36 @@
+#! /home/orange/pyenv/bin/python -B
+
+import argparse
+import subprocess
+from umbrellamouth import *
+
+@with_cursor
+def main(cursor=None):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('perc', nargs='?', type=float) 
+    args = parser.parse_args()
+
+    stdin = parse_stdin()
+
+    if args.perc is None:
+        output = subprocess.run(
+            ['rofi', '-dmenu', '-p', '%'],
+            input='',
+            text=True, 
+            capture_output=True,
+        ).stdout.strip()
+        
+        if not output: # pressed esc usually
+            sys.exit()
+
+        args.perc = float(output) / 100     
+
+    if not (0 <= args.perc <= 1):
+        parser.error('perc must be between 0 and 1')
+
+    for entry, attrs in parse(stdin, cursor=cursor):
+        index = perc_to_pos('priority', args.perc, cursor=cursor) 
+        insert_('priority', entry, index, cursor=cursor)
+        
+if __name__ == '__main__':
+    main()
