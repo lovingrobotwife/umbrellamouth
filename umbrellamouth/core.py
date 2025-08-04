@@ -12,7 +12,7 @@ from contextlib import contextmanager
 
 START_OF_DAY = '0400'
 DEFAULT_PRIORITY_PERC = 0.5
-DEFAULT_SCHEDULER = 'topic'
+DEFAULT_SCHEDULER = 'invariable 1'
 
 COLL = '/home/orange/000'
 DB = '/home/orange/000/.umbrellamouth/umbrellamouth.db'
@@ -91,6 +91,7 @@ def save_attr(entry, attr, value, cursor=None):
 
 @with_cursor
 def save_attrs(entry, attrs, cursor=None):
+    # TODO delete attrs that have been removed from dict
     for attr, value in attrs.items():
         save_attr(entry, attr, value, cursor=cursor)
 

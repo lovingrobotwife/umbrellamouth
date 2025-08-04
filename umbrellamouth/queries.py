@@ -30,3 +30,21 @@ def outstanding_priority_sort(cursor=None): # TODO TEST
     ''', (timestamp,))
 
     return [entry[0] for entry in cursor.fetchall()]
+
+@with_cursor
+def outstanding_fsrs_priority_sort(cursor=None): # TODO TEST
+    timestamp = get_next_start_of_day().timestamp() 
+
+    cursor.execute('''
+        SELECT e.entry
+        FROM (
+            SELECT entry FROM umbrellamouth WHERE attribute = 'due' AND CAST(value AS INTEGER) <= ?
+            INTERSECT
+            SELECT entry FROM umbrellamouth WHERE attribute = 'scheduler' AND value = '"fsrs"'
+        ) AS entries
+        JOIN umbrellamouth e ON entries.entry = e.entry
+        WHERE e.attribute = 'priority'
+        ORDER BY CAST(e.value AS INTEGER) ASC
+    ''', (timestamp,))
+
+    return [entry[0] for entry in cursor.fetchall()]
