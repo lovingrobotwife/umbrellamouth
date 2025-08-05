@@ -4,8 +4,11 @@ import sys
 import random
 import argparse
 import subprocess
-from fsrs import Scheduler, Card, Rating 
 from datetime import datetime, timedelta, timezone
+
+from fsrs.scheduler import Scheduler
+from fsrs.card import Card
+from fsrs.review_log import Rating
 
 from umbrellamouth import *
 

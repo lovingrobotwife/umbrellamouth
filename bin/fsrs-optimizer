@@ -1,0 +1,44 @@
+#! /home/orange/pyenv/bin/python -B
+
+from datetime import datetime, timedelta, timezone
+
+from fsrs.card import Card
+from fsrs.review_log import ReviewLog, Rating
+from fsrs.optimizer import Optimizer
+
+from umbrellamouth import *
+
+@with_cursor
+def get_fsrs(cursor=None):
+    cursor.execute('''
+        SELECT entry FROM umbrellamouth 
+        WHERE attribute = 'scheduler'
+        AND value = '"fsrs"'
+    ''')
+    return [entry[0] for entry in cursor.fetchall()] 
+
+@with_cursor
+def get_review_logs(cursor=None):
+    review_logs = []
+
+    for entry, attrs in parse(get_fsrs(cursor=cursor), cursor=cursor):
+        card_id = Card().card_id 
+
+        review_log = attrs.get('review_log', [])
+        for timestamp, label in review_log:
+            rating = Rating.Good if label else Rating.Again
+            review_datetime = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+            review_log = ReviewLog(card_id=card_id, rating=rating, review_datetime=review_datetime, review_duration=None)
+            review_logs.append(review_log)
+
+    return review_logs
+
+@with_cursor
+def main(cursor=None):
+    review_logs = get_review_logs(cursor=cursor) 
+    optimizer = Optimizer(review_logs)
+    parameters = optimizer.compute_optimal_parameters()
+    print(parameters) 
+
+if __name__ == '__main__':
+    main()
