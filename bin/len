@@ -1,5 +1,0 @@
-#! /home/orange/pyenv/bin/python -B
-
-from umbrellamouth import *
-
-print(len(outstanding()))

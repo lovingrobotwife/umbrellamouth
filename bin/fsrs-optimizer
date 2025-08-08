@@ -22,14 +22,13 @@ def get_review_logs(cursor=None):
     review_logs = []
 
     for entry, attrs in parse(get_fsrs(cursor=cursor), cursor=cursor):
-        card_id = Card().card_id 
+        card_id = Card().card_id
 
         review_log = attrs.get('review_log', [])
         for timestamp, label in review_log:
-            rating = Rating.Good if label else Rating.Again
+            rating = Rating.Good if label else Rating.Again # 0 is again, 1 is good
             review_datetime = datetime.fromtimestamp(timestamp, tz=timezone.utc)
-            review_log = ReviewLog(card_id=card_id, rating=rating, review_datetime=review_datetime, review_duration=None)
-            review_logs.append(review_log)
+            review_logs.append(ReviewLog(card_id=card_id, rating=rating, review_datetime=review_datetime, review_duration=None))
 
     return review_logs
 
@@ -38,6 +37,7 @@ def main(cursor=None):
     review_logs = get_review_logs(cursor=cursor) 
     optimizer = Optimizer(review_logs)
     parameters = optimizer.compute_optimal_parameters()
+    print(f'{len(review_logs)} reviews')
     print(parameters) 
 
 if __name__ == '__main__':

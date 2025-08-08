@@ -21,7 +21,13 @@ def main(cursor=None):
     attrs['path'] = relative_to_coll(path)
     save_attrs(entry, attrs, cursor=cursor)
     
-    init_priority(entry, attrs, cursor=cursor)
+    # inherit prioriy from window (if possible) 
+    window_entry, window_attrs = resolve_window()
+    if window_entry is None or window_attrs.get('priority', None) is None:
+        init_priority(entry, attrs, cursor=cursor)
+    else:
+        index = window_attrs['priority']
+        insert_('priority', entry, index, cursor=cursor)
 
     print(path)
     

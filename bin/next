@@ -24,13 +24,17 @@ def next_(entry, attrs):
 def main(cursor=None):
     subset = None
         
-    if random.random() >= 0.75:
+    if random.random() < 0.25:  # 1 in 4 chance
         subset = outstanding_fsrs_priority_sort(cursor=cursor)
     
     if not subset:
         subset = outstanding_priority_sort(cursor=cursor)
 
-    if random.random() >= 0.75:
+    # TODO if subset is empty: make all "topics" that are due tomorrow to today
+    # or figure out some kind of way to "postpone" items.
+    # (only topics, not "items")
+
+    if random.random() < 0.33:  # 1 in x chance
         random.shuffle(subset)
 
     for entry, attrs in parse(subset, cursor=cursor):

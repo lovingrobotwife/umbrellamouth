@@ -12,18 +12,20 @@ from fsrs.review_log import Rating
 
 from umbrellamouth import *
 
-DESIRED_RETENTION = 0.9
-PARAMETERS = (0.2172, 1.1771, 3.2602, 16.1507, 7.0114, 0.57, 2.0966, 0.0069, 1.5261, 0.112, 1.0178, 1.849, 0.1133, 0.3127, 2.2934, 0.2191, 3.0004, 0.7536, 0.3332, 0.1437, 0.2)
+PARAMETERS = [0.2172, 1.1771, 3.2602, 16.1507, 7.0114, 0.57, 2.0966, 0.0069, 1.5261, 0.112, 1.0178, 1.849, 0.1133, 0.3127, 2.2934, 0.2191, 3.0004, 0.7536, 0.3332, 0.1437, 0.2] # these are my parameters
 MAXIMUM_INTERVAL = 36500
+DESIRED_RETENTION = 0.9 # DR is currently randomized between 0.8 and 0.95 (
 
-PASS_RATINGS = ('1', 'pass', 'good') 
-FAIL_RATINGS = ('0', 'fail', 'again') 
+PASS_RATINGS = ('1', 'pass', 'good')
+FAIL_RATINGS = ('0', 'fail', 'again')
 RATINGS = PASS_RATINGS + FAIL_RATINGS
 
 def due_(review_log):
+    desired_retention = random.uniform(0.8, 0.95)
+
     scheduler = Scheduler(
         parameters=PARAMETERS,
-        desired_retention=DESIRED_RETENTION,
+        desired_retention=desired_retention,
         learning_steps=(),
         relearning_steps=(),
         maximum_interval=MAXIMUM_INTERVAL,
@@ -38,7 +40,8 @@ def due_(review_log):
         card, _ = scheduler.review_card(card, rating, review_datetime=review_datetime)
 
     interval = interval_(card.due.astimezone().replace(tzinfo=None))
-    interval = gauss_fuzz(interval, ratio=0.2)
+    interval = gauss_fuzz(interval, ratio=0.1) # TODO is this necessary when DR is randomized?
+                                               # it probably doesn't matter that much, but maybe...
 
     return datetime.now() + timedelta(days=interval)
 
@@ -71,7 +74,7 @@ def main(cursor=None):
 
     # validate input
     if args.rating in PASS_RATINGS: args.rating = 1
-    elif args.rating in FAIL_RATINGS: args.rating = 0    
+    elif args.rating in FAIL_RATINGS: args.rating = 0
     else: raise Exception('invalid rating')
 
     # review

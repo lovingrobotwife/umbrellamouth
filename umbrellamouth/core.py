@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from contextlib import contextmanager
 
 START_OF_DAY = '0400'
-DEFAULT_PRIORITY_PERC = 0.5
+DEFAULT_PRIORITY_PERC = 0.33
 DEFAULT_SCHEDULER = 'invariable 1'
 
 COLL = '/home/orange/000'
@@ -90,8 +90,23 @@ def save_attr(entry, attr, value, cursor=None):
     ''', (entry, attr, value))
 
 @with_cursor
+def remove_attr(entry, attr, cursor=None):
+    cursor.execute('''
+        DELETE FROM umbrellamouth 
+        WHERE entry = ? 
+        AND attr = ?
+    ''', (entry, attr))
+
+@with_cursor
 def save_attrs(entry, attrs, cursor=None):
-    # TODO delete attrs that have been removed from dict
+    '''
+    old_atts = attrs_(entry, cursor=cursor)
+    to_remove = set(old_attrs) - set(attrs)
+        
+    for attr in to_remove:
+        remove_attr(entry, attr, cursor=cursor)
+    ''' # TODO TEST!
+    
     for attr, value in attrs.items():
         save_attr(entry, attr, value, cursor=cursor)
 

@@ -43,6 +43,7 @@ if __name__ == '__main__':
         for path in find_paths(args.input):
             attrs = default_attrs()
             attrs['due'] = int(datetime.now().timestamp())
+            attrs['interval'] = 0
             stored_attrs = {}
 
             if not is_uuid(path.stem): # therefore can't be in the database
