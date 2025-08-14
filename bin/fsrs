@@ -6,9 +6,7 @@ import argparse
 import subprocess
 from datetime import datetime, timedelta, timezone
 
-from fsrs.scheduler import Scheduler
-from fsrs.card import Card
-from fsrs.review_log import Rating
+from fsrs import Scheduler, Rating, Card
 
 from umbrellamouth import *
 
@@ -40,7 +38,7 @@ def due_(review_log):
         card, _ = scheduler.review_card(card, rating, review_datetime=review_datetime)
 
     interval = interval_(card.due.astimezone().replace(tzinfo=None))
-    interval = gauss_fuzz(interval, ratio=0.1) # TODO is this necessary when DR is randomized?
+    #interval = gauss_fuzz(interval, ratio=0.1) # TODO is this necessary when DR is randomized?
                                                # it probably doesn't matter that much, but maybe...
 
     return datetime.now() + timedelta(days=interval)

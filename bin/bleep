@@ -1,0 +1,98 @@
+#! /home/orange/pyenv/bin/python -B
+
+import os
+import sys
+import uuid
+import argparse
+import tempfile
+import subprocess
+from pathlib import Path
+
+def parse_stdin():
+    return [i.strip() for i in sys.stdin.readlines()] if not sys.stdin.isatty() else None
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('input', nargs='*', default=parse_stdin(), help='input [file_path/url]') 
+    parser.add_argument('-ss', type=float, help='start (in seconds)')
+    parser.add_argument('-to', type=float, help='end (in seconds)')
+    args = parser.parse_args()
+
+    if args.ss > args.to:
+        args.ss, args.to = args.to, args.ss 
+
+    if not args.input:
+        print('no input provided', file=sys.stderr)
+        sys.exit(1)
+
+    if not isinstance(args.input, list):
+        args.input = [args.input]
+
+    return args
+
+def download(url):
+    download_path = subprocess.run(
+        ['yt-dlp', 
+            '--get-filename', 
+            '--no-download-archive', 
+            '-o', f'{tempfile.gettempdir()}/{uuid.uuid4().hex}.%(ext)s', 
+            url
+        ], 
+        text=True, capture_output=True, check=True
+    ).stdout.strip()
+
+    subprocess.run(
+        ['yt-dlp', 
+            '--quiet', 
+            '--merge-output-format', 'mkv', 
+            '-o', download_path, 
+            url
+        ],
+        check=True
+    )
+
+    return Path(download_path)
+
+def bleep(file_path, output, ss, to):
+    subprocess.run(
+        ['ffmpeg', 
+            '-loglevel', 'error',
+            '-hide_banner',
+            '-y',
+            '-i', str(file_path),
+            '-filter_complex', f"[0]volume=0:enable='between(t,{ss},{to})'[main];sine=d={to - ss}:f=800,adelay={ss * 1000},pan=stereo|FL=c0|FR=c0[bleep];[bleep][main]amix=inputs=2[combined]",
+            '-map', '[combined]',
+            '-map', '0',
+            '-c:v', 'copy',
+            '-shortest', 
+            str(output)
+        ], 
+        check=True
+    )
+
+def main():
+    args = parse_args()
+
+    for i in args.input:
+        downloaded = False
+
+        if not Path(i).is_file():
+            downloaded = True
+            i = download(i)
+
+        i = Path(i).resolve()
+
+        output = subprocess.run(
+            ['catch-item', '.mkv'], 
+            text=True, capture_output=True, check=True
+        ).stdout.strip()
+
+        bleep(i, output, args.ss, args.to)
+
+        if downloaded:
+            i.unlink()
+
+        print(output)
+
+if __name__ == '__main__':
+    main()

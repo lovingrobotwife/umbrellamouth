@@ -1,0 +1,83 @@
+#! /home/orange/pyenv/bin/python -B
+
+import os
+import sys
+import argparse
+import subprocess
+from pathlib import Path
+from urllib.parse import urlparse
+
+def is_url(x):
+    try:
+        result = urlparse(x)
+        return all([result.scheme, result.netloc])
+    except:
+        return False
+
+def parse_stdin():
+    return [i.strip() for i in sys.stdin.readlines()] if not sys.stdin.isatty() else None
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('input', nargs='*', default=parse_stdin(), help='input [file_path/url]') 
+    parser.add_argument('-ss', type=float, required=True, help='start (in seconds)')
+    parser.add_argument('-to', type=float, required=True, help='end (in seconds)')
+    args = parser.parse_args()
+
+    if args.ss > args.to:
+        args.ss, args.to = args.to, args.ss 
+
+    if not args.input:
+        print('no input provided', file=sys.stderr)
+        sys.exit(1)
+
+    if not isinstance(args.input, list):
+        args.input = [args.input]
+
+    return args
+
+def get_url(url):
+    if not is_url(url):
+        print('invalid url', file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        return subprocess.run(
+            ['yt-dlp', '--quiet', '-g', url], 
+            check=True, text=True, capture_output=True
+        ).stdout.strip()
+    except subprocess.CalledProcessError:
+        print('yt-dlp error', file=sys.stderr)
+        sys.exit(1)
+
+def clip(src, output, ss, to):
+    try:
+        subprocess.run(
+            ['ffmpeg', 
+                '-loglevel', 'error', 
+                '-hide_banner', '-y', 
+                '-ss', str(ss), 
+                '-to', str(to), 
+                '-i', str(src), 
+                str(output)
+            ], 
+            check=True
+        )
+    except:
+        print('invalid input', file=sys.stderr)
+        sys.exit(1)
+
+def main():
+    args = parse_args()
+
+    for i in args.input:
+        i = get_url(i) if not Path(i).is_file() else Path(i).resolve()
+        output = subprocess.run(
+            ['catch', '.mkv'], 
+            text=True, capture_output=True
+        ).stdout.strip()
+        clip(i, output, args.ss, args.to)
+        print(output)
+
+if __name__ == '__main__':
+    main()

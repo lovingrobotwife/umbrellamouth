@@ -26,7 +26,7 @@ def main(cursor=None):
     if window_entry is None or window_attrs.get('priority', None) is None:
         init_priority(entry, attrs, cursor=cursor)
     else:
-        index = window_attrs['priority']
+        index = window_attrs['priority'] + 1
         insert_('priority', entry, index, cursor=cursor)
 
     print(path)

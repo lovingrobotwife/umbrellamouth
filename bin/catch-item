@@ -1,0 +1,6 @@
+#! /bin/bash
+
+path=$(catch "${1}") 
+echo "$path" | scheduler fsrs
+echo "$path" | fsrs good
+echo "$path"
