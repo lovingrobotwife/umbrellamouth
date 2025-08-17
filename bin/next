@@ -24,7 +24,7 @@ def next_(entry, attrs):
 def main(cursor=None):
     subset = None
         
-    if random.random() < 0.25:  # 1 in 4 chance
+    if random.random() < 0.33:  # 1 in 4 chance
         subset = outstanding_fsrs_priority_sort(cursor=cursor)
 
     if not subset:
@@ -34,7 +34,7 @@ def main(cursor=None):
     # or figure out some kind of way to "postpone" items.
     # (only topics, not "items")
 
-    if random.random() < 0.33:  # 1 in x chance
+    if random.random() < 0.5:  # 1 in x chance
         random.shuffle(subset)
 
     for entry, attrs in parse(subset, cursor=cursor):
