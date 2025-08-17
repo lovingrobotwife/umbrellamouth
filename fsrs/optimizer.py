@@ -198,9 +198,12 @@ try:
                             card = Card(card_id=card_id, due=review_datetime)
 
                         # only non-same-day reviews count
+                        # NOTE: umbrellamouth doesn't allow for same day repetitions
+                        # TODO: rework how interval is calculated instead of not checking at all
+                         
                         if (
                             card.last_review
-                            and (review_datetime - card.last_review).days > 0
+                            #and (review_datetime - card.last_review).days > 0
                         ):
                             num_reviews += 1
 
