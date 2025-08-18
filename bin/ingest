@@ -48,6 +48,7 @@ if __name__ == '__main__':
 
             if not is_uuid(path.stem): # therefore can't be in the database
                 attrs['title'] = path.stem.lower().strip()
+                attrs['scheduler'] = 'ingest'
                 entry = entry_()
                 stem = path.with_stem(entry)
                 path = path.rename(stem)

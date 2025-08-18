@@ -14,6 +14,9 @@ START_OF_DAY = '0400'
 DEFAULT_PRIORITY_PERC = 0.33
 DEFAULT_SCHEDULER = 'invariable 1'
 
+DEFAULT_INGEST_SCHEDULER = 'invariable 1'
+DEFAULT_CATCH_SCHEDULER = 'topic'
+
 COLL = '/home/orange/000'
 DB = '/home/orange/000/.umbrellamouth/umbrellamouth.db'
 

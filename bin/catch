@@ -19,6 +19,7 @@ def main(cursor=None):
     
     attrs = default_attrs()
     attrs['path'] = relative_to_coll(path)
+    attrs['scheduler'] = 'catch'
     save_attrs(entry, attrs, cursor=cursor)
     
     # inherit prioriy from window (if possible) 

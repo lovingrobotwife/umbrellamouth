@@ -30,6 +30,12 @@ def get_next_start_of_day():
 
 def call_scheduler(entry, attrs, ask=False):
     scheduler = attrs.get('scheduler', DEFAULT_SCHEDULER) 
+
+    if scheduler == 'catch':
+        scheduler = DEFAULT_CATCH_SCHEDULER
+    if scheduler == 'ingest':
+        scheduler = DEFAULT_INGEST_SCHEDULER
+
     scheduler = split_name_and_args(scheduler)
     if ask: scheduler.append('--ask')
     proc = subprocess.run(scheduler, input=str(entry), text=True, capture_output=True)
