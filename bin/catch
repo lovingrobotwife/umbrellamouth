@@ -1,5 +1,6 @@
 #! /home/orange/pyenv/bin/python -B
 
+import math
 import argparse
 
 from umbrellamouth import *
@@ -27,7 +28,9 @@ def main(cursor=None):
     if window_entry is None or window_attrs.get('priority', None) is None:
         init_priority(entry, attrs, cursor=cursor)
     else:
-        index = window_attrs['priority'] + 1
+        index = window_attrs['priority']
+        index = math.ceil(index * random.uniform(0.5, 1.5))
+        index = max(0, index)
         insert_('priority', entry, index, cursor=cursor)
 
     print(path)

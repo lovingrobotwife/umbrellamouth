@@ -1,5 +1,6 @@
 #! /home/orange/pyenv/bin/python -B
 
+import sys
 from datetime import datetime, timedelta, timezone
 
 from fsrs import Optimizer, ReviewLog, Rating, Card
@@ -30,9 +31,13 @@ def get_review_logs(cursor=None):
             review_logs.append(ReviewLog(card_id=card_id, rating=rating, review_datetime=review_datetime, review_duration=None))
         
         num_reviews += i
+
     print(f'{num_reviews} reviews')
+
     if num_reviews < 512:
         print('# default parameters')
+        sys.exit()
+
     return review_logs
 
 @with_cursor

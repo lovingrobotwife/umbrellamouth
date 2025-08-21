@@ -31,6 +31,10 @@ def main(cursor=None):
         interval = math.ceil(last_interval * afactor * fuzz)
         interval = max(last_interval + 1, interval)
 
+        # higher variance at lower intervals 
+        if interval <= 3:
+            interval = random.randint(interval, 5)
+
         attrs['due'] = int((datetime.now() + timedelta(days=interval)).timestamp())
         attrs['interval'] = interval
 
